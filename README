@@ -1,6 +1,0 @@
-#“Compare my Python models with the current database, and generate a migration file for the differences.”
-
-alembic revision --autogenerate -m "initial migration" #run in console
-
-#aaply migration
-alembic upgrade head
