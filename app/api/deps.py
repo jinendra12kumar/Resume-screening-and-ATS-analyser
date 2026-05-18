@@ -9,6 +9,8 @@ from sqlalchemy import select
 
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.security import decode_token
+
 
 from app.db.models.users import User
 
@@ -29,21 +31,17 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    try:
-
-        payload = jwt.decode(
-            token,
-            settings.SECRET_KEY,
-            algorithms=[settings.ALGORITHM]
-        )
-
-        user_id = payload.get("sub")
-
-        if user_id is None:
-            raise credentials_exception
-
-    except JWTError:
+    decoded=decode_token(token)
+    if not decoded:
         raise credentials_exception
+    
+    if decoded.get("type")!= "access":
+        raise credentials_exception
+    
+    user_id=decoded.get("sub")
+
+    if user_id is None:
+        raise credentials_exception 
 
     result = await db.execute(
         select(User).where(User.id == user_id)

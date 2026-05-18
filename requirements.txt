@@ -11,3 +11,13 @@ passlib [bcrypt]
 email-validator 
 python-multipart
 python-jose[cryptography]
+python-multipart 
+aiofiles
+pymupdf 
+python-docx 
+spacy 
+pdfplumber
+sentence-transformers
+torch
+numpy
+scikit-learn

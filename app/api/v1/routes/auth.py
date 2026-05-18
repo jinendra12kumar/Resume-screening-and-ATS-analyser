@@ -5,11 +5,12 @@ from app.core.database import get_db
 from app.schemas.auth import (
     RegisterSchema,
     LoginSchema,
-    TokenSchema
+    TokenSchema,
+    RefreshTokenSchema
 )
 
 from app.services.auth_service import AuthService
-from app.core.security import create_access_token
+from app.core.security import (create_access_token, create_refresh_token, decode_token)
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -57,11 +58,38 @@ async def login(
             detail="Invalid credentials"
         )
 
-    token = create_access_token({
+    token_data = {
         "sub": str(user.id),
         "role": user.role.value
-    })
+    }
+
+    access_token=create_access_token(token_data)
+    refresh_token=create_refresh_token(token_data)
 
     return {
-        "access_token": token
+        "access_token": access_token,
+        "refresh_token":refresh_token
+    }
+
+@router.post("/refresh",response_model=TokenSchema)
+async def refresh_token(payload:RefreshTokenSchema):
+    decoded=decode_token(payload.refresh_token)
+
+    if not decoded:
+        raise HTTPException(status_code=401, detail="invalid refresh token")
+    
+    if decoded.get("type")!="refresh":
+        raise HTTPException(status_code=401, detail="invalid token type")
+    
+    token_data={
+        "sub":decoded["sub"],
+        "role":decoded["role"]
+    }
+
+    new_access_token=create_access_token(token_data)
+    new_refresh_token=create_refresh_token(token_data)
+
+    return {
+        "access_token":new_access_token,
+        "refresh_token":new_refresh_token
     }
